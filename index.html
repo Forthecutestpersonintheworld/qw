@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Mỗi ngày trước khi Châu đi ngủ ❤️</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  overflow: hidden;
+  cursor: pointer;
+  font-family: 'Quicksand', sans-serif;
+  background: radial-gradient(circle at 50% 80%, #3a0ca3, #0d1b2a 60%, #000814);
+}
+
+#sky {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* sao nền */
+.bg-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #fff3b0;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: twinkle 4s infinite;
+}
+
+/* sao bay */
+.piece {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ffd166;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #ffd166;
+}
+
+/* trail */
+.trail {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #ffe7a0;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+/* mảnh ảnh */
+.piece.reveal {
+  border-radius: 0;
+  background-image: url('2.png');
+  background-size: 700px 700px;
+  box-shadow: 0 0 6px rgba(255,255,200,0.4);
+  animation: revealSoft 1s ease forwards;
+}
+
+@keyframes revealSoft {
+  from { opacity: 0; filter: blur(8px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+/* ảnh cuối */
+#finalImage {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 700px;
+  height: 700px;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+#finalImage.show {
+  opacity: 1;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -52%) translateY(-10px); }
+}
+
+/* text */
+#text {
+  position: absolute;
+  top: 80%;
+  width: 100%;
+  text-align: center;
+  color: #fff3b0;
+  font-size: 32px;
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  background: #fff3b0;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes twinkle {
+  0%,100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="sky"></div>
+<div id="finalImage"></div>
+<div id="text"><span id="typing"></span><span class="cursor"></span></div>
+
+<audio id="music" src="1.mp3"></audio>
+
+<script>
+const sky = document.getElementById("sky");
+const music = document.getElementById("music");
+const finalImage = document.getElementById("finalImage");
+const typing = document.getElementById("typing");
+
+const imgSize = 700;
+const rows = 13;
+const cols = 13;
+const pieceSize = imgSize / cols;
+
+const centerX = Math.floor(cols / 2);
+const centerY = Math.floor(rows / 2);
+
+let pieces = [];
+let started = false;
+
+// ⭐ sao nền
+for (let i = 0; i < 200; i++) {
+  let s = document.createElement("div");
+  s.className = "bg-star";
+  s.style.left = Math.random()*window.innerWidth+"px";
+  s.style.top = Math.random()*window.innerHeight+"px";
+  s.style.animationDuration = (Math.random()*3+2)+"s";
+  sky.appendChild(s);
+}
+
+// ⭐ tạo mảnh (bỏ trung tâm)
+for (let y = 0; y < rows; y++) {
+  for (let x = 0; x < cols; x++) {
+
+    if (x === centerX && y === centerY) continue;
+
+    let div = document.createElement("div");
+    div.className = "piece";
+
+    div.style.left = Math.random()*window.innerWidth+"px";
+    div.style.top = Math.random()*window.innerHeight+"px";
+
+    const cx = (window.innerWidth/2 - imgSize/2) + x*pieceSize;
+    const cy = (window.innerHeight/2 - imgSize/2) + y*pieceSize - 80;
+
+    div.dataset.correctX = cx;
+    div.dataset.correctY = cy;
+    div.dataset.bgPos = `-${x*pieceSize}px -${y*pieceSize}px`;
+
+    sky.appendChild(div);
+    pieces.push(div);
+  }
+}
+
+// trail
+function trail(x,y){
+  let t=document.createElement("div");
+  t.className="trail";
+  t.style.left=x+"px";
+  t.style.top=y+"px";
+  sky.appendChild(t);
+  setTimeout(()=>t.remove(),400);
+}
+
+// bay cong
+function animate(el,sx,sy,ex,ey,d){
+  return new Promise(res=>{
+    let st=null;
+    let cx=(sx+ex)/2+(Math.random()-0.5)*300;
+    let cy=(sy+ey)/2-Math.random()*200;
+
+    function step(t){
+      if(!st) st=t;
+      let p=(t-st)/d;
+      if(p>1)p=1;
+
+      let x=(1-p)*(1-p)*sx+2*(1-p)*p*cx+p*p*ex;
+      let y=(1-p)*(1-p)*sy+2*(1-p)*p*cy+p*p*ey;
+
+      el.style.left=x+"px";
+      el.style.top=y+"px";
+      trail(x,y);
+
+      if(p<1) requestAnimationFrame(step);
+      else res();
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+// ✍️ typewriter
+function typeText(text, speed=60){
+  let i=0;
+  function typingEffect(){
+    if(i<text.length){
+      typing.innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typingEffect,speed);
+    }
+  }
+  typingEffect();
+}
+
+// click
+document.body.addEventListener("click", async ()=>{
+  if(started) return;
+  started=true;
+
+  music.play();
+
+  pieces.sort(()=>Math.random()-0.5);
+
+  let i=0;
+  while(i<pieces.length){
+    let groupSize=Math.floor(Math.random()*3)+3;
+    let group=pieces.slice(i,i+groupSize);
+
+    await Promise.all(group.map(async p=>{
+      let sx=p.offsetLeft, sy=p.offsetTop;
+      let ex=parseFloat(p.dataset.correctX);
+      let ey=parseFloat(p.dataset.correctY);
+
+      await animate(p,sx,sy,ex,ey,1500);
+
+      p.classList.add("reveal");
+      p.style.width=pieceSize+"px";
+      p.style.height=pieceSize+"px";
+      p.style.backgroundPosition=p.dataset.bgPos;
+    }));
+
+    i+=groupSize;
+    await new Promise(r=>setTimeout(r,300));
+  }
+
+  // 🌟 glow trung tâm (CHUẨN vị trí)
+  const holeX = (window.innerWidth/2 - imgSize/2) + centerX * pieceSize;
+  const holeY = (window.innerHeight/2 - imgSize/2) + centerY * pieceSize - 80;
+
+  let hole = document.createElement("div");
+  hole.style.position = "absolute";
+  hole.style.width = pieceSize + "px";
+  hole.style.height = pieceSize + "px";
+  hole.style.left = holeX + "px";
+  hole.style.top = holeY + "px";
+  hole.style.boxShadow = "0 0 25px rgba(255,230,150,0.6)";
+  hole.style.borderRadius = "6px";
+  hole.style.opacity = 0;
+
+  document.body.appendChild(hole);
+
+  setTimeout(()=>{
+    hole.style.transition = "opacity 2s";
+    hole.style.opacity = 1;
+  },200);
+
+  // ảnh cuối
+  finalImage.style.backgroundImage="url('your-image.jpg')";
+  finalImage.style.backgroundSize="cover";
+  finalImage.classList.add("show");
+
+  // text
+  setTimeout(()=>{
+    typeText("Châu là mảnh ghép còn lại của Thanh ❤️");
+  },1000);
+
+});
+</script>
+
+</body>
+</html>
